@@ -10,8 +10,13 @@
 API_TOKEN=""
 
 USER_AGENT="AnDNS/1.0.0 (hi@anlo.ng)"
-DOMAIN=$(expr match "$CERTBOT_DOMAIN" '.*\.\(.*\..*\)')
-TXHOST=$(expr match "$CERTBOT_DOMAIN" '\(.*\)\..*\..*')
+if [[ $CERTBOT_DOMAIN == *.com.cn ]];then
+  DOMAIN=$(expr match "$CERTBOT_DOMAIN" '.*\.\(.*\.com\.cn\)')
+  TXHOST=$(expr match "$CERTBOT_DOMAIN" '\(.*\)\..*\.com\.cn')
+else
+  DOMAIN=$(expr match "$CERTBOT_DOMAIN" '.*\.\(.*\..*\)')
+  TXHOST=$(expr match "$CERTBOT_DOMAIN" '\(.*\)\..*\..*')
+fi
 [ -z "$DOMAIN" ] && DOMAIN="$CERTBOT_DOMAIN"
 [ -z "$TXHOST" ] || TXHOST="_acme-challenge.$TXHOST"
 [ -z "$TXHOST" ] && TXHOST="_acme-challenge"
@@ -54,7 +59,7 @@ if [ "$1" = "clean" ]; then
       APIRET=$(curl -s -X POST "https://dnsapi.cn/Record.Remove" \
           -H "User-Agent: $USER_AGENT" \
           -d "$PARAMS&domain=$DOMAIN&record_id=$RECORD_ID" \
-      | python -c "import sys,json;ret=json.load(sys.stdin);print(ret.get('status',{}).get('message','error'))")
+      | python -c "import sys,json;reload(sys);sys.setdefaultencoding('utf8');ret=json.load(sys.stdin);print(ret.get('status',{}).get('message','error'))")
       echo "Remove Record: $RECORD_ID - $APIRET"
     fi
     rm -f $RECORD_FILE
@@ -62,7 +67,7 @@ else
     RECORD_ID=$(curl -s -X POST "https://dnsapi.cn/Record.Create" \
         -H "User-Agent: $USER_AGENT" \
         -d "$PARAMS&domain=$DOMAIN&sub_domain=$TXHOST&record_type=TXT&value=$CERTBOT_VALIDATION&record_line=默认" \
-    | python -c "import sys,json;ret=json.load(sys.stdin);print(ret.get('record',{}).get('id',ret.get('status',{}).get('message','error')))")
+    | python -c "import sys,json;reload(sys);sys.setdefaultencoding('utf8');ret=json.load(sys.stdin);print(ret.get('record',{}).get('id',ret.get('status',{}).get('message','error')))")
 
     # Save info for cleanup
     if [ ! -d $RECORD_PATH ]; then
